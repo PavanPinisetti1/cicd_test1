@@ -46,7 +46,7 @@ wwv_imp_workspace.create_flow(
 ,p_substitution_value_01=>'CICD_DEMO'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>6
-,p_version_scn=>12213466549677
+,p_version_scn=>12213466666807
 ,p_print_server_type=>'INSTANCE'
 ,p_file_storage=>'DB'
 ,p_is_pwa=>'Y'
