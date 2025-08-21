@@ -1,0 +1,6 @@
+"Release 1.0 - End-User Changes" 
+"" 
+"- Application: updated to a new version (internal version marker advanced)." 
+"- Page 2: removed two text fields that were used for testing." 
+"" 
+"For reviewers: see summary_main_to_1.0.txt for file-level details." 

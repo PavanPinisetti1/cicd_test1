@@ -1,3 +1,6 @@
+ reports/diff_main_to_1.0.patch                     | 54 ++++++++++++++++++++++
+ reports/files_changed_main_to_1.0.txt              |  2 +
+ reports/summary_main_to_1.0.txt                    |  3 ++
  .../f201/application/create_application.sql        |  2 +-
- .../f201/application/pages/page_00002.sql          | 30 ----------------------
- 2 files changed, 1 insertion(+), 31 deletions(-)
+ .../f201/application/pages/page_00002.sql          | 30 ------------
+ 5 files changed, 60 insertions(+), 31 deletions(-)
