@@ -1,0 +1,3 @@
+ .../f201/application/create_application.sql        |  2 +-
+ .../f201/application/pages/page_00002.sql          | 30 ----------------------
+ 2 files changed, 1 insertion(+), 31 deletions(-)
