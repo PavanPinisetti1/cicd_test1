@@ -6,9 +6,9 @@ project init -name APEX_APP -schemas WKSP_EBS2CLOUD_MIGRATION
 
 --If exists then removes it
 
-host rmdir /s /q "src\apex\applications\f201"
+!host rmdir /s /q "src\apex\applications\f201"
 
-apex export -applicationid 201 -split -dir src/apex/applications
+!apex export -applicationid 201 -split -dir src/apex/applications
 
 --apex export -applicationid 201 -split -dir "src/apex/applications" -skipExportDate
 

@@ -36,6 +36,17 @@ wwv_flow_imp_page.create_page_plug(
   'output_as', 'HTML',
   'show_line_breaks', 'Y')).to_clob
 );
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(25074295029377804)
+,p_plug_name=>'NEWREGION'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>4072358936313175081
+,p_plug_display_sequence=>30
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'expand_shortcuts', 'N',
+  'output_as', 'HTML')).to_clob
+);
 wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(25073963995377801)
 ,p_name=>'P1_NAME'

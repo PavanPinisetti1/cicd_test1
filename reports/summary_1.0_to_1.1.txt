@@ -1,0 +1,19 @@
+ dist/install.sql                                   |   4 +-
+ dist/releases/main.changelog.xml                   |   7 +
+ dist/releases/next/changes/1.0/stage.changelog.xml |   6 +
+ dist/releases/next/release.changelog.xml           |   7 +
+ dist/utils/prechecks.sql                           |  81 ++++++++
+ dist/utils/recompile.sql                           | 225 +++++++++++++++++++++
+ log_changes.sql                                    |  23 +++
+ log_changes2.sh                                    |  26 +++
+ log_changes3.py                                    | 105 ++++++++++
+ log_changes4.js                                    | 123 +++++++++++
+ reports/CHANGELOG_USER_1.0.md                      |  11 +-
+ reports/diff_main_to_1.0.patch                     |  78 +++++++
+ reports/files_changed_                             |   0
+ reports/files_changed_main_to_1.0.txt              |   7 +
+ reports/summary_main_to_1.0.txt                    |   8 +
+ single_application_backup.sql                      |  30 +++
+ .../f201/application/create_application.sql        |   2 +-
+ .../f201/application/pages/page_00001.sql          |  30 +++
+ 18 files changed, 766 insertions(+), 7 deletions(-)

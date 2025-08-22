@@ -1,0 +1,894 @@
+diff --git a/dist/install.sql b/dist/install.sql
+index aad82a1..1f0afbb 100644
+--- a/dist/install.sql
++++ b/dist/install.sql
+@@ -17,6 +17,8 @@ set sqlblanklines on
+ 
+ -- Kick off Liquibase
+ prompt "Installing/updating schemas"
+-lb update -log -changelog-file releases/main.changelog.xml -search-path "."
++exec dbms_output.put_line('Starting Liquibase update...');
++!lb update -log -changelog-file releases/main.changelog.xml -search-path "."
+ 
+ --@utils/recompile.sql
++
+diff --git a/dist/releases/main.changelog.xml b/dist/releases/main.changelog.xml
+new file mode 100644
+index 0000000..e69ad7e
+--- /dev/null
++++ b/dist/releases/main.changelog.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
++                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
++                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
++<include file="next/release.changelog.xml" relativeToChangelogFile="true"/>
++</databaseChangeLog>
+\ No newline at end of file
+diff --git a/dist/releases/next/changes/1.0/stage.changelog.xml b/dist/releases/next/changes/1.0/stage.changelog.xml
+new file mode 100644
+index 0000000..6a64f49
+--- /dev/null
++++ b/dist/releases/next/changes/1.0/stage.changelog.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
++                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
++                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
++</databaseChangeLog>
+\ No newline at end of file
+diff --git a/dist/releases/next/release.changelog.xml b/dist/releases/next/release.changelog.xml
+new file mode 100644
+index 0000000..aabf4f2
+--- /dev/null
++++ b/dist/releases/next/release.changelog.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
++                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
++                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
++<!--CHANGES-->
++</databaseChangeLog>
+diff --git a/dist/utils/prechecks.sql b/dist/utils/prechecks.sql
+new file mode 100644
+index 0000000..5f6c72b
+--- /dev/null
++++ b/dist/utils/prechecks.sql
+@@ -0,0 +1,81 @@
++-- prechecks.sql
++set serverout on feedback off
++
++prompt Checking SQLcl version...
++column  _SQLPLUS_RELEASE    new_value   _SQLPLUS_RELEASE
++column  _PWD                new_value   _PWD
++select
++    null "_SQLPLUS_RELEASE",
++    null "_PWD"
++from sys.dual
++where 1=2;
++
++begin
++    if '&&_SQLPLUS_RELEASE' is null or '&&_PWD' is null then
++        raise_application_error(-20001, 'This installer must be run using SQLcl');
++    end if;
++
++    if '&&_SQLPLUS_RELEASE' != '2403000000' then
++        raise_application_error(-20001, 'This installer must be run using SQLcl 24.3.0');
++    end if;
++
++end;
++/
++
++-- prompt Checking minimum database version...
++-- declare
++--     c_min_db_version constant number := 19;
++--     c_min_db_release constant number := 0;
++-- begin
++--     sys.dbms_output.put_line(sys.dbms_db_version.version || '.' || sys.dbms_db_version.release);
++--     if sys.dbms_db_version.version < c_min_db_version
++--     or (sys.dbms_db_version.version = c_min_db_version and sys.dbms_db_version.release < c_min_db_release)
++--     then
++--         sys.dbms_output.put_line('FAILED');
++--         raise_application_error(-20000, 'Minimum database version is ' || c_min_db_version || '.' || c_min_db_release || '.');
++--     end if;
++-- end;
++-- /
++
++-- prompt Checking session character Set...
++-- declare
++--     l_nls_characterset nls_database_parameters.value%type;
++-- begin
++--     select value
++--     into l_nls_characterset
++--     from nls_database_parameters
++--     where parameter = 'NLS_CHARACTERSET';
++--     sys.dbms_output.put_line(l_nls_characterset);
++--     if ascii('ú') != 50106 then
++--         sys.dbms_output.put_line('FAILED');
++--         raise_application_error(-20000, 'Character set not AL32UTF8. Set environment variable NLS_LANG=.AL32UTF8 for sqlplus, or JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8 for sqlcl.');
++--     end if;
++-- end;
++-- /
++
++-- prompt Checking minimum APEX version...
++-- declare
++--     c_min_apex_version constant number := 23;
++--     c_min_apex_release constant number := 1;
++--     l_version dba_registry.version%type;
++--     l_version_no number;
++--     l_release_no number;
++-- begin
++--     select version into l_version from dba_registry where comp_id = 'APEX';
++--     sys.dbms_output.put_line(l_version);
++--     l_version_no := to_number(substr(l_version, 1, instr(l_version, '.')-1));
++--     l_release_no := to_number(substr(l_version, instr(l_version, '.')+1, instr(l_version, '.', 1, 2) - instr(l_version, '.') - 1));
++--     if l_version_no < c_min_apex_version
++--     or (l_version_no = c_min_apex_version and l_release_no < c_min_apex_release)
++--     then
++--         sys.dbms_output.put_line('FAILED');
++--         raise_application_error(-20000, 'Oracle APEX ' || c_min_apex_version || '.' || c_min_apex_release || ' or later must be installed');
++--     end if;
++-- exception
++--     when no_data_found then
++--         sys.dbms_output.put_line('FAILED');
++--         raise_application_error(-20000, 'Oracle APEX must be installed (minimum ' || c_min_apex_version || '.' || c_min_apex_release || ')');
++-- end;
++-- /
++
++prompt Prechecks successful.
+\ No newline at end of file
+diff --git a/dist/utils/recompile.sql b/dist/utils/recompile.sql
+new file mode 100644
+index 0000000..fc59a1b
+--- /dev/null
++++ b/dist/utils/recompile.sql
+@@ -0,0 +1,225 @@
++prompt Invalid object counts (INVALID status only):
++
++set define on
++define schemas="WKSP_EBS2CLOUD_MIGRATION"
++
++var p_schemas varchar2(4000)
++exec :p_schemas :='&schemas';
++
++set feedback off pagesize 100 linesize 150 heading on
++set serveroutput ON
++
++-- check currently invalid
++column owner format a20
++select owner,
++       object_type,
++       count(*) as compilation_needed
++  from dba_objects
++ where owner in (
++     select upper(regexp_substr(:p_schemas,'[^,]+', 1, level)) schema
++     from dual
++     connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++     )
++   and status = 'INVALID'
++   and object_name not like 'BIN$%'
++ group by owner,
++          object_type
++ order by owner,
++          object_type;
++
++prompt
++prompt Compiling invalid objects...
++prompt
++
++-- compile invalid
++declare
++  l_schemas sys.odcivarchar2list;
++begin
++  select regexp_substr(:p_schemas, '[^,]+', 1, level)
++  bulk collect into l_schemas
++  from dual
++  connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null;
++
++  for rec in (
++   select username from dba_users
++   where username in (
++     select upper(column_value) schema
++     from table(cast(multiset(select regexp_substr(:p_schemas, '[^,]+', 1, level)
++                                from dual
++                               connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null) as sys.odcivarchar2list))
++    )
++    order by username
++  ) loop
++    dbms_output.put('Compiling '||rec.username||' ...');
++    dbms_utility.compile_schema(
++                               rec.username,
++                               false
++    );
++    dbms_output.put_line('Done!');
++  end loop;
++end;
++/
++
++prompt
++prompt Invalid object counts after recompilation (INVALID status + synonyms with missing targets):
++
++--column owner format a20
++with synonyms as (
++  select owner,
++         synonym_name,
++         table_owner,
++         table_name
++    from dba_synonyms
++   where owner in (
++    select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++      from dual
++     connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++  )
++), synonyms_by_owner as (
++  select owner,
++         count(*) cnt
++    from synonyms
++   group by owner
++), invalid_synonyms_by_owner as (
++  select owner,
++         nullif(
++           count(
++             case
++               when not exists(
++                 select 1
++                   from dba_objects o
++                  where s.table_name = o.object_name
++                    and s.table_owner = o.owner
++               ) then
++                 1
++             end
++           ),
++           0
++         ) cnt
++    from synonyms s
++   group by owner
++)
++select owner,
++       object_type,
++       count(*) as object_count,
++       nullif(
++         count(nullif(
++           status,
++           'VALID'
++         )),
++         0
++       ) as invalid_count
++  from dba_objects
++ where owner in (
++  select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++    from dual
++   connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++)
++   and object_type != 'SYNONYM'
++   and object_name not like 'BIN$%'
++ group by owner,
++          object_type
++union
++select sbo.owner,
++       'SYNONYM' object_type,
++       sbo.cnt total_count,
++       nullif(
++         isbo.cnt,
++         0
++       ) invalid_count
++  from synonyms_by_owner sbo
++  left join invalid_synonyms_by_owner isbo
++on sbo.owner = isbo.owner
++ order by owner,
++          object_type;
++
++set feedback on
++
++prompt
++prompt Invalid objects:
++
++column invalid_object format a50
++select owner,
++       object_type
++       || ' '
++       || object_name as invalid_object
++  from dba_objects
++ where status = 'INVALID'
++   and owner in (
++  select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++    from dual
++   connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++)
++   and object_type != 'SYNONYM'
++   and object_name not like 'BIN$%'
++union
++select s.owner,
++       'SYNONYM ' || s.synonym_name invalid_object
++  from dba_synonyms s
++ where owner in (
++  select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++    from dual
++   connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++)
++   and not exists (
++  select 1
++    from dba_objects o
++   where o.object_name = s.table_name
++     and o.owner = s.table_owner
++)
++order by 2;
++
++prompt
++prompt Compilation errors:
++column error_location format a50
++column error_text format a50
++select owner,
++       type
++       || ' '
++       || name
++       || ' '
++       || line
++       || ','
++       || position as error_location,
++       text as error_text
++  from dba_errors
++ where owner in
++   (
++     select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++     from dual
++     connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++     )
++   and text not like 'PL/SQL: ORA-06575: %' /*Package or function is in an invalid state*/
++   and text not like 'PLS-00905: %' /*object is invalid*/
++   and name not like 'BIN$%'
++union
++select s.owner,
++       'SYNONYM ' || synonym_name error_location,
++       'Synonym target does not exist'
++  from dba_synonyms s
++ where owner in (
++  select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++    from dual
++   connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++)
++   and not exists (
++  select 1
++    from dba_objects o
++   where o.object_name = s.table_name
++     and o.owner = s.table_owner
++)
++order by 1, 2;
++
++set feedback off
++
++select count(*) as "Other compilation errors not listed"
++  from dba_errors
++ where owner in
++   (
++     select upper(regexp_substr(:p_schemas, '[^,]+', 1, level)) schema
++     from dual
++     connect by regexp_substr(:p_schemas, '[^,]+', 1, level) is not null
++   )
++   and ( text like 'PL/SQL: ORA-06575: %' /*Package or function is in an invalid state*/
++    or text like 'PLS-00905: %' /*object is invalid*/ )
++   and name not like 'BIN$%';
+\ No newline at end of file
+diff --git a/log_changes.sql b/log_changes.sql
+new file mode 100644
+index 0000000..464cec2
+--- /dev/null
++++ b/log_changes.sql
+@@ -0,0 +1,23 @@
++-- ============================
++-- SQLcl Script : log_changes.sql
++-- ============================
++
++-- Prompt for old and new branch names
++define oldBranch = 'main'
++define newBranch = '1.0'
++
++-- Create reports folder if not exists
++host mkdir -p reports
++
++-- Log only file names that changed
++host "git diff --name-only &oldBranch..&newBranch > reports/files_changed_&oldBranch._to_&newBranch..txt"
++
++-- Log file change summary
++host "git diff --stat &oldBranch..&newBranch > reports/summary_&oldBranch._to_&newBranch..txt"
++
++-- Log full diff patch
++host "git diff &oldBranch..&newBranch > reports/diff_&oldBranch._to_&newBranch..patch"
++
++prompt
++prompt ✅ Change logs generated in ./reports folder
++prompt
+diff --git a/log_changes2.sh b/log_changes2.sh
+new file mode 100644
+index 0000000..13c219b
+--- /dev/null
++++ b/log_changes2.sh
+@@ -0,0 +1,26 @@
++-- log_changes.sql (SQLcl script with human-readable changelog)
++ 
++accept oldBranch char prompt 'Enter OLD branch/tag: '
++accept newBranch char prompt 'Enter NEW branch/tag: '
++ 
++-- Create reports folder
++host mkdir reports 2>nul
++ 
++-- Always sync remote
++host git fetch --all
++ 
++-- Raw Git outputs
++host git diff --name-only &oldBranch &newBranch > reports/files_changed_&oldBranch._to_&newBranch..txt
++host git diff --stat &oldBranch &newBranch > reports/summary_&oldBranch._to_&newBranch..txt
++host git diff &oldBranch &newBranch > reports/diff_&oldBranch._to_&newBranch..patch
++ 
++-- Human-readable CHANGELOG
++host echo "Release &newBranch - End-User Changes" > reports/CHANGELOG_USER_&newBranch..md
++host echo. >> reports/CHANGELOG_USER_&newBranch..md
++host echo "- Application updated from &oldBranch to &newBranch." >> reports/CHANGELOG_USER_&newBranch..md
++host echo "- See summary_&oldBranch._to_&newBranch..txt for technical file-level details." >> reports/CHANGELOG_USER_&newBranch..md
++host echo "- Full patch stored in diff_&oldBranch._to_&newBranch..patch" >> reports/CHANGELOG_USER_&newBranch..md
++host echo. >> reports/CHANGELOG_USER_&newBranch..md
++host echo "This file is meant for business stakeholders and QA reviewers." >> reports/CHANGELOG_USER_&newBranch..md
++ 
++prompt ✅ Human-readable CHANGELOG created: reports/CHANGELOG_USER_&newBranch..md
+\ No newline at end of file
+diff --git a/log_changes3.py b/log_changes3.py
+new file mode 100644
+index 0000000..c7fafe5
+--- /dev/null
++++ b/log_changes3.py
+@@ -0,0 +1,105 @@
++import os
++import sys
++import subprocess
++from pathlib import Path
++
++def run(cmd, cwd=None, check=True, capture_output=False):
++    """Run a shell command with optional output capture and error handling."""
++    kwargs = {
++        "cwd": cwd,
++        "shell": isinstance(cmd, str),
++        "check": check,
++        "text": True,
++    }
++    if capture_output:
++        kwargs["stdout"] = subprocess.PIPE
++        kwargs["stderr"] = subprocess.PIPE
++    try:
++        return subprocess.run(cmd, **kwargs)
++    except subprocess.CalledProcessError as e:
++        if capture_output:
++            print(e.stdout or "", end="")
++            print(e.stderr or "", end="", file=sys.stderr)
++        raise
++
++def ensure_repo():
++    # Sanity check: are we in a git repo?
++    try:
++        run(["git", "rev-parse", "--is-inside-work-tree"], check=True)
++    except subprocess.CalledProcessError:
++        print("Error: Not inside a Git repository. Run this script at the repo root.")
++        sys.exit(1)
++
++def sanitize_branch_name(name: str) -> str:
++    # Safe-ish file-friendly representation
++    return name.replace("/", "_").replace("\\", "_").replace("..", "_")
++
++def main():
++    ensure_repo()
++
++    try:
++        updated_branch = input("Enter updated branch (new version): ").strip()
++        old_branch = input("Enter old branch (previous version): ").strip()
++        if not updated_branch or not old_branch:
++            print("Both branch names are required.")
++            sys.exit(1)
++
++        # Switch to the updated branch
++        run(["git", "checkout", updated_branch])
++
++        # Ensure old branch is available locally (fetch, checkout old, return to updated)
++        run(["git", "fetch", "origin"])
++        run(["git", "checkout", old_branch])
++        run(["git", "checkout", updated_branch])
++
++        # Make reports folder cross-platform
++        reports_dir = Path("reports")
++        reports_dir.mkdir(parents=True, exist_ok=True)
++
++        # Filenames (match the style in your SQLcl script)
++        old_s = sanitize_branch_name(old_branch)
++        upd_s = sanitize_branch_name(updated_branch)
++
++        files_changed_path = reports_dir / f"files_changed_{old_s}_to_{upd_s}.txt"
++        summary_path = reports_dir / f"summary_{old_s}_to_{upd_s}.txt"
++        patch_path = reports_dir / f"diff_{old_s}_to_{upd_s}.patch"
++
++        # Generate reports
++        with files_changed_path.open("w", encoding="utf-8") as f:
++            p = run(["git", "diff", "--name-only", f"{old_branch}..{updated_branch}"],
++                    capture_output=True)
++            f.write(p.stdout or "")
++
++        with summary_path.open("w", encoding="utf-8") as f:
++            p = run(["git", "diff", "--stat", f"{old_branch}..{updated_branch}"],
++                    capture_output=True)
++            f.write(p.stdout or "")
++
++        with patch_path.open("w", encoding="utf-8") as f:
++            p = run(["git", "diff", f"{old_branch}..{updated_branch}"],
++                    capture_output=True)
++            f.write(p.stdout or "")
++
++        # Stage and commit the reports
++        run(["git", "add", str(files_changed_path), str(summary_path), str(patch_path)], check=True)
++
++        # Commit message mirrors your original
++        commit_msg = f"Add human-readable diffs: {old_branch} → {updated_branch}"
++        # If nothing to commit, 'git commit' exits with non-zero; handle gracefully
++        try:
++            run(["git", "commit", "-m", commit_msg], check=True)
++            print("Reports committed successfully.")
++        except subprocess.CalledProcessError:
++            print("No changes to commit (reports unchanged).")
++
++        print("Done.")
++        print(f"- {files_changed_path}")
++        print(f"- {summary_path}")
++        print(f"- {patch_path}")
++
++    except KeyboardInterrupt:
++        print("\nAborted by user.")
++        sys.exit(1)
++
++if __name__ == "__main__":
++    main()
+diff --git a/log_changes4.js b/log_changes4.js
+new file mode 100644
+index 0000000..e5e410d
+--- /dev/null
++++ b/log_changes4.js
+@@ -0,0 +1,123 @@
++#!/usr/bin/env node
++/* generate_diff_reports.js
++   Replicates:
++   - Prompt for updated/old branches
++   - git checkout updated, ensure old exists, return to updated
++   - Create reports/
++   - Write: files_changed_<old>_to_<updated>.txt
++             summary_<old>_to_<updated>.txt
++             diff_<old>_to_<updated>.patch
++   - git add + commit
++
++   Run: node generate_diff_reports.js
++*/
++
++const { spawnSync } = require('node:child_process');
++const { mkdirSync, writeFileSync, existsSync } = require('node:fs');
++const { join } = require('node:path');
++const readline = require('node:readline');
++
++function run(cmd, args, opts = {}) {
++  const res = spawnSync(cmd, args, { stdio: 'pipe', encoding: 'utf-8', ...opts });
++  if (opts.check !== false && res.status !== 0) {
++    // Bubble up stdout/stderr for easier troubleshooting
++    const out = (res.stdout || '').trim();
++    const err = (res.stderr || '').trim();
++    const msg = [`Command failed: ${cmd} ${args.join(' ')}`, out, err].filter(Boolean).join('\n');
++    throw new Error(msg);
++  }
++  return res;
++}
++
++function inGitRepo() {
++  const res = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { encoding: 'utf-8' });
++  return res.status === 0 && (res.stdout || '').trim() === 'true';
++}
++
++function sanitizeBranchName(name) {
++  return name.replace(/[\\/]/g, '_').replace(/\.\./g, '_').trim();
++}
++
++async function prompt(q) {
++  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
++  const answer = await new Promise((resolve) => rl.question(q, resolve));
++  rl.close();
++  return answer.trim();
++}
++
++async function main() {
++  if (!inGitRepo()) {
++    console.error('Error: Not inside a Git repository. Run this script at the repo root.');
++    process.exit(1);
++  }
++
++  const updatedBranch = await prompt('Enter updated branch (new version): ');
++  const oldBranch = await prompt('Enter old branch (previous version): ');
++
++  if (!updatedBranch || !oldBranch) {
++    console.error('Both branch names are required.');
++    process.exit(1);
++  }
++
++  // Checkout updated branch
++  run('git', ['checkout', updatedBranch]);
++
++  // Ensure old branch is available locally, then come back to updated
++  run('git', ['fetch', 'origin']);
++  // If oldBranch is remote-only, try to create a local branch tracking it
++  // Attempt checkout; if it fails, try "git checkout -t origin/<oldBranch>"
++  let ok = spawnSync('git', ['checkout', oldBranch], { encoding: 'utf-8' });
++  if (ok.status !== 0) {
++    ok = spawnSync('git', ['checkout', '-t', `origin/${oldBranch}`], { encoding: 'utf-8' });
++    if (ok.status !== 0) {
++      console.error(`Unable to checkout old branch '${oldBranch}'. Make sure it exists locally or on origin.`);
++      process.exit(1);
++    }
++  }
++  run('git', ['checkout', updatedBranch]);
++
++  // Prepare reports folder
++  const reportsDir = join(process.cwd(), 'reports');
++  if (!existsSync(reportsDir)) {
++    mkdirSync(reportsDir, { recursive: true });
++  }
++
++  const oldS = sanitizeBranchName(oldBranch);
++  const updS = sanitizeBranchName(updatedBranch);
++
++  const filesChangedPath = join(reportsDir, `files_changed_${oldS}_to_${updS}.txt`);
++  const summaryPath = join(reportsDir, `summary_${oldS}_to_${updS}.txt`);
++  const patchPath = join(reportsDir, `diff_${oldS}_to_${updS}.patch`);
++
++  // Generate diffs
++  const filesChanged = run('git', ['diff', '--name-only', `${oldBranch}..${updatedBranch}`], { check: false });
++  writeFileSync(filesChangedPath, (filesChanged.stdout || ''), 'utf-8');
++
++  const summary = run('git', ['diff', '--stat', `${oldBranch}..${updatedBranch}`], { check: false });
++  writeFileSync(summaryPath, (summary.stdout || ''), 'utf-8');
++
++  const patch = run('git', ['diff', `${oldBranch}..${updatedBranch}`], { check: false });
++  writeFileSync(patchPath, (patch.stdout || ''), 'utf-8');
++
++  // Stage and commit
++  run('git', ['add', filesChangedPath, summaryPath, patchPath]);
++  const commitMsg = `Add human-readable diffs: ${oldBranch} → ${updatedBranch}`;
++  const commit = spawnSync('git', ['commit', '-m', commitMsg], { encoding: 'utf-8' });
++  if (commit.status !== 0) {
++    const msg = (commit.stderr || commit.stdout || '').trim();
++    if (msg) console.log(msg);
++    console.log('No changes to commit (reports unchanged).');
++  } else {
++    console.log('Reports committed successfully.');
++  }
++
++  console.log('Generated files:');
++  console.log(`- ${filesChangedPath}`);
++  console.log(`- ${summaryPath}`);
++  console.log(`- ${patchPath}`);
++}
++
++main().catch((e) => {
++  console.error(e.message || e);
++  process.exit(1);
++});
+diff --git a/reports/CHANGELOG_USER_1.0.md b/reports/CHANGELOG_USER_1.0.md
+index 8142e05..45e9d2c 100644
+--- a/reports/CHANGELOG_USER_1.0.md
++++ b/reports/CHANGELOG_USER_1.0.md
+@@ -1,6 +1,7 @@
+ "Release 1.0 - End-User Changes" 
+-"" 
+-"- Application: updated to a new version (internal version marker advanced)." 
+-"- Page 2: removed two text fields that were used for testing." 
+-"" 
+-"For reviewers: see summary_main_to_1.0.txt for file-level details." 
++ 
++"- Application updated from main to 1.0" 
++"- See summary_main_to_1.0.txt for technical file-level details." 
++"- Full patch stored in diff_main_to_1.0.patch" 
++ 
++"This file is meant for business stakeholders and QA reviewers." 
+diff --git a/reports/diff_main_to_1.0.patch b/reports/diff_main_to_1.0.patch
+index e69de29..9f39e1d 100644
+--- a/reports/diff_main_to_1.0.patch
++++ b/reports/diff_main_to_1.0.patch
+@@ -0,0 +1,78 @@
++diff --git a/reports/CHANGELOG_USER_1.0.md b/reports/CHANGELOG_USER_1.0.md
++new file mode 100644
++index 0000000..8142e05
++--- /dev/null
+++++ b/reports/CHANGELOG_USER_1.0.md
++@@ -0,0 +1,6 @@
+++"Release 1.0 - End-User Changes" 
+++"" 
+++"- Application: updated to a new version (internal version marker advanced)." 
+++"- Page 2: removed two text fields that were used for testing." 
+++"" 
+++"For reviewers: see summary_main_to_1.0.txt for file-level details." 
++diff --git a/reports/diff_main_to_1.0.patch b/reports/diff_main_to_1.0.patch
++new file mode 100644
++index 0000000..e69de29
++diff --git a/reports/files_changed_ b/reports/files_changed_
++new file mode 100644
++index 0000000..e69de29
++diff --git a/reports/files_changed_main_to_1.0.txt b/reports/files_changed_main_to_1.0.txt
++new file mode 100644
++index 0000000..e69de29
++diff --git a/reports/summary_main_to_1.0.txt b/reports/summary_main_to_1.0.txt
++new file mode 100644
++index 0000000..e69de29
++diff --git a/src/apex/applications/f201/application/create_application.sql b/src/apex/applications/f201/application/create_application.sql
++index eda67a3..ece4e44 100644
++--- a/src/apex/applications/f201/application/create_application.sql
+++++ b/src/apex/applications/f201/application/create_application.sql
++@@ -46,7 +46,7 @@ wwv_imp_workspace.create_flow(
++ ,p_substitution_value_01=>'CICD_DEMO'
++ ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
++ ,p_files_version=>6
++-,p_version_scn=>12213466549677
+++,p_version_scn=>12213466666807
++ ,p_print_server_type=>'INSTANCE'
++ ,p_file_storage=>'DB'
++ ,p_is_pwa=>'Y'
++diff --git a/src/apex/applications/f201/application/pages/page_00002.sql b/src/apex/applications/f201/application/pages/page_00002.sql
++index 9cc5a0a..607dcd3 100644
++--- a/src/apex/applications/f201/application/pages/page_00002.sql
+++++ b/src/apex/applications/f201/application/pages/page_00002.sql
++@@ -241,36 +241,6 @@ wwv_flow_imp_page.create_ig_report_column(
++ ,p_is_visible=>true
++ ,p_is_frozen=>false
++ );
++-wwv_flow_imp_page.create_page_item(
++- p_id=>wwv_flow_imp.id(24768455404890010)
++-,p_name=>'P2_NEW'
++-,p_item_sequence=>20
++-,p_prompt=>'Sample Test'
++-,p_display_as=>'NATIVE_TEXT_FIELD'
++-,p_cSize=>30
++-,p_field_template=>1609121967514267634
++-,p_item_template_options=>'#DEFAULT#'
++-,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
++-  'disabled', 'N',
++-  'submit_when_enter_pressed', 'N',
++-  'subtype', 'TEXT',
++-  'trim_spaces', 'BOTH')).to_clob
++-);
++-wwv_flow_imp_page.create_page_item(
++- p_id=>wwv_flow_imp.id(24768584082890011)
++-,p_name=>'P2_NEW_1'
++-,p_item_sequence=>30
++-,p_prompt=>'Sample Test'
++-,p_display_as=>'NATIVE_TEXT_FIELD'
++-,p_cSize=>30
++-,p_field_template=>1609121967514267634
++-,p_item_template_options=>'#DEFAULT#'
++-,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
++-  'disabled', 'N',
++-  'submit_when_enter_pressed', 'N',
++-  'subtype', 'TEXT',
++-  'trim_spaces', 'BOTH')).to_clob
++-);
++ wwv_flow_imp_page.create_page_process(
++  p_id=>wwv_flow_imp.id(24768380267890009)
++ ,p_process_sequence=>10
+diff --git a/reports/files_changed_ b/reports/files_changed_
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/reports/files_changed_main_to_1.0.txt b/reports/files_changed_main_to_1.0.txt
+index e69de29..f828a8f 100644
+--- a/reports/files_changed_main_to_1.0.txt
++++ b/reports/files_changed_main_to_1.0.txt
+@@ -0,0 +1,7 @@
++reports/CHANGELOG_USER_1.0.md
++reports/diff_main_to_1.0.patch
++reports/files_changed_
++reports/files_changed_main_to_1.0.txt
++reports/summary_main_to_1.0.txt
++src/apex/applications/f201/application/create_application.sql
++src/apex/applications/f201/application/pages/page_00002.sql
+diff --git a/reports/summary_main_to_1.0.txt b/reports/summary_main_to_1.0.txt
+index e69de29..62c47cf 100644
+--- a/reports/summary_main_to_1.0.txt
++++ b/reports/summary_main_to_1.0.txt
+@@ -0,0 +1,8 @@
++ reports/CHANGELOG_USER_1.0.md                      |  6 +++++
++ reports/diff_main_to_1.0.patch                     |  0
++ reports/files_changed_                             |  0
++ reports/files_changed_main_to_1.0.txt              |  0
++ reports/summary_main_to_1.0.txt                    |  0
++ .../f201/application/create_application.sql        |  2 +-
++ .../f201/application/pages/page_00002.sql          | 30 ----------------------
++ 7 files changed, 7 insertions(+), 31 deletions(-)
+diff --git a/single_application_backup.sql b/single_application_backup.sql
+new file mode 100644
+index 0000000..f9c6a53
+--- /dev/null
++++ b/single_application_backup.sql
+@@ -0,0 +1,30 @@
++project init -name APEX_APP -schemas WKSP_EBS2CLOUD_MIGRATION
++
++
++!git init
++
++
++--If exists then removes it
++
++host rmdir /s /q "src\apex\applications\f201"
++
++apex export -applicationid 201 -split -dir src/apex/applications
++
++--apex export -applicationid 201 -split -dir "src/apex/applications" -skipExportDate
++
++
++!git add .
++!git commit -m "initializing repository with default project SAMPLE_N files"
++
++ACCEPT REMOTE_URL CHAR PROMPT 'Enter Git remote URL: '
++!git remote add origin &REMOTE_URL
++
++!git checkout -b base-release
++
++
++!git push -u origin main
++!git push -u origin base-release
++
++
++
++
+diff --git a/src/apex/applications/f201/application/create_application.sql b/src/apex/applications/f201/application/create_application.sql
+index ece4e44..f0f4911 100644
+--- a/src/apex/applications/f201/application/create_application.sql
++++ b/src/apex/applications/f201/application/create_application.sql
+@@ -46,7 +46,7 @@ wwv_imp_workspace.create_flow(
+ ,p_substitution_value_01=>'CICD_DEMO'
+ ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
+ ,p_files_version=>6
+-,p_version_scn=>12213466666807
++,p_version_scn=>12213483562482
+ ,p_print_server_type=>'INSTANCE'
+ ,p_file_storage=>'DB'
+ ,p_is_pwa=>'Y'
+diff --git a/src/apex/applications/f201/application/pages/page_00001.sql b/src/apex/applications/f201/application/pages/page_00001.sql
+index 0b6aef6..c94fcea 100644
+--- a/src/apex/applications/f201/application/pages/page_00001.sql
++++ b/src/apex/applications/f201/application/pages/page_00001.sql
+@@ -36,6 +36,36 @@ wwv_flow_imp_page.create_page_plug(
+   'output_as', 'HTML',
+   'show_line_breaks', 'Y')).to_clob
+ );
++wwv_flow_imp_page.create_page_item(
++ p_id=>wwv_flow_imp.id(25073963995377801)
++,p_name=>'P1_NAME'
++,p_item_sequence=>10
++,p_prompt=>'Name'
++,p_display_as=>'NATIVE_TEXT_FIELD'
++,p_cSize=>30
++,p_field_template=>1609121967514267634
++,p_item_template_options=>'#DEFAULT#'
++,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
++  'disabled', 'N',
++  'submit_when_enter_pressed', 'N',
++  'subtype', 'TEXT',
++  'trim_spaces', 'BOTH')).to_clob
++);
++wwv_flow_imp_page.create_page_item(
++ p_id=>wwv_flow_imp.id(25074018679377802)
++,p_name=>'P1_HOME'
++,p_item_sequence=>20
++,p_prompt=>'Home'
++,p_display_as=>'NATIVE_TEXT_FIELD'
++,p_cSize=>30
++,p_field_template=>1609121967514267634
++,p_item_template_options=>'#DEFAULT#'
++,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
++  'disabled', 'N',
++  'submit_when_enter_pressed', 'N',
++  'subtype', 'TEXT',
++  'trim_spaces', 'BOTH')).to_clob
++);
+ wwv_flow_imp.component_end;
+ end;
+ /
