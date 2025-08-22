@@ -1,0 +1,8 @@
+ reports/CHANGELOG_USER_1.0.md                      |  6 +++++
+ reports/diff_main_to_1.0.patch                     |  0
+ reports/files_changed_                             |  0
+ reports/files_changed_main_to_1.0.txt              |  0
+ reports/summary_main_to_1.0.txt                    |  0
+ .../f201/application/create_application.sql        |  2 +-
+ .../f201/application/pages/page_00002.sql          | 30 ----------------------
+ 7 files changed, 7 insertions(+), 31 deletions(-)
